@@ -17,14 +17,21 @@ if not st.session_state["autenticado"]:
             st.rerun()
     st.stop()
 
-# CONEXÃO COM A IA
+# CONEXÃO COM A IA (COM AUTODETECÇÃO)
 try:
     API_KEY = st.secrets["GEMINI_API_KEY"]
     genai.configure(api_key=API_KEY)
-    # Ajustado de 'models/gemini-1.5-flash' para apenas 'gemini-1.5-flash'
-    model = genai.GenerativeModel('gemini-1.5-flash')
+    
+    # Tenta o modelo Flash, se falhar, tenta o Pro
+    try:
+        model = genai.GenerativeModel('gemini-1.5-flash')
+        # Teste rápido para ver se o modelo existe
+        model.prepare_content_request(contents="test")
+    except:
+        model = genai.GenerativeModel('gemini-pro')
+        
 except Exception as e:
-    st.error(f"Erro de configuração: {e}")
+    st.error(f"Erro de Conexão: {e}")
     st.stop()
 
 # INTERFACE
@@ -41,17 +48,17 @@ if opcao == "Análise de Custos":
                 response = model.generate_content(f"Como estrategista logístico, analise: {relato}")
                 st.info(response.text)
             except Exception as e:
-                st.error(f"Erro ao gerar resposta: {e}")
+                st.error(f"Erro na análise: {e}")
         else:
-            st.warning("Por favor, descreva algo para analisar.")
+            st.warning("Por favor, preencha o relato.")
 
 elif opcao == "Copiloto IA":
     st.title("🤖 Chat Estratégico")
-    pergunta = st.chat_input("Pergunte algo sobre a estratégia da sua frota...")
+    pergunta = st.chat_input("Pergunte algo...")
     if pergunta:
         st.write(f"**Sua Pergunta:** {pergunta}")
         try:
             response = model.generate_content(pergunta)
             st.write(f"**IA:** {response.text}")
         except Exception as e:
-            st.error(f"A IA encontrou um problema: {e}")
+            st.error(f"O modelo encontrou um problema: {e}")
